@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+
+		<title>Slide story board</title>
+
+		<style>
+			/*GLOBAL*/
+			body {
+				height: 100%;
+				font-size: 14px;
+				line-height: 1.42857;
+				color: #333;
+
+				font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+			}
+			#container {
+				width: 900px;
+				margin-left: auto;
+				margin-right: auto;
+				left: 0;
+				right: 0;
+				position: absolute;
+			}
+
+
+			/*MENU*/
+			#menu {
+				border-bottom: 1px solid #E5E5E5;
+				margin-bottom: 30px;
+			}
+
+			#menu h3 {
+				line-height: 40px;
+
+				font-size: 24px;
+				font-family: inherit;
+				font-weight: 500;
+				text-decoration: none;
+				color: #666;
+			}
+
+			.menu-items {
+				margin-top: 0px;
+				margin-bottom: 0px;
+			}
+
+			.menu-items li {
+				position: relative;
+				display: block;
+
+				float: left;
+				list-style: outside none none;
+			}
+			.menu-items li + li {
+				margin-left: 14px;
+			}
+
+			.menu-items li a {
+				position: relative;
+				display: block;
+				padding: 10px 15px;
+
+				color: #337AB7;
+				text-decoration: none;
+				border-radius: 4px;
+			}
+			.menu-items li a:hover, .menu-items li a:focus {
+				background-color: #EEE;
+			}
+
+
+			.pull-right {
+				float: right !important;
+			}
+
+			#scene {
+				background-color: #EEE;
+				border-radius: 6px;
+				height: 450px;
+				position: relative;
+			}
+
+			button:focus {outline:0;}
+		</style>
+
+		<script>
+			//SVG elements have some weird namespace thing for attributes.
+			const svgHelper = function() {
+				const setSVGAttribute = (element, name, value) => {
+					element.setAttributeNS(null, name, value);
+				}
+
+				const getSVGAttribute = (element, name) => {
+					return element.getAttributeNS(null, name);
+				}
+
+				const generateSVGElement = (name, attributes) => {
+					let result = document.createElementNS("http://www.w3.org/2000/svg", name);
+
+					if (attributes !== undefined) {
+						Object.keys(attributes).forEach(
+							key => {
+								setSVGAttribute(result, key, attributes[key]);
+							}
+						);
+					}
+
+					return result;
+				}
+
+				//module API
+				return {
+					generateSVGElement,
+					setSVGAttribute,
+					getSVGAttribute
+				}
+			}();
+		</script>
+		<script>
+			const drawLine = (svgRoot, x1, y1, x2, y2, id, style) => {
+				let attributes = {
+					id,
+					x1,
+					y1,
+					x2,
+					y2
+				};
+
+				if (style === undefined) {
+					attributes["stroke"] = "black";
+					attributes["stroke-opacity"] = 0.2;
+					attributes["stroke-width"] = 2;
+				}
+				let newLine = svgHelper.generateSVGElement("line", attributes);
+
+				svgRoot.appendChild(newLine);
+			}
+
+			const drawCircle = (svgRoot, cx, cy, radius, id, color) => {
+				let attributes = {
+					id,
+					cx,
+					cy,
+					r: radius,
+					stroke: color,
+					fill: color
+				};
+
+				if (color === undefined) {
+					attributes["stroke"] = "blue";
+					attributes["fill"] = "blue";
+				}
+				let newCircle = svgHelper.generateSVGElement("circle", attributes);
+
+				svgRoot.appendChild(newCircle);
+			}
+
+			const drawRect = (svgRoot, x, y, width, height, id, borderColor, fillColor) => {
+				let attributes = {
+					id,
+					x,
+					y,
+					width,
+					height,
+					stroke: borderColor,
+					fill: fillColor || borderColor
+				};
+
+				if (borderColor === undefined) {
+					attributes["stroke"] = "blue";
+					attributes["fill"] = "blue";
+				}
+				let newRect = svgHelper.generateSVGElement("rect", attributes);
+
+				svgRoot.appendChild(newRect);
+			}
+
+			const startScreen = (svgRoot, dimensions) => {
+				const MAX_WIDTH = dimensions.MAX_WIDTH;
+				const MAX_HEIGHT = dimensions.MAX_HEIGHT;
+				const CELL_SIDE = dimensions.CELL_SIDE;
+				const CELL_SIDE_HALF = CELL_SIDE/2;
+
+				// ***default background***
+				drawRect(svgRoot, 0, 0, MAX_WIDTH, MAX_HEIGHT, "background", "black", "beige");
+
+				// ***start grid***
+				for (let i = 1; i < MAX_WIDTH/CELL_SIDE; i++) {
+					let x = i*CELL_SIDE;
+					drawLine(svgRoot, x, 0, x, MAX_HEIGHT, "vertical_"+i);
+				}
+
+				for (let i = 1; i < MAX_HEIGHT/CELL_SIDE; i++) {
+					let y = i*CELL_SIDE;
+					drawLine(svgRoot, 0, y, MAX_WIDTH, y, "horizontal_"+i);
+				}
+
+				// ***landscape elements***
+				const drawCircleInCell = (svgRoot, i, j, radius, id, color) => {
+					drawCircle(svgRoot, i*CELL_SIDE+CELL_SIDE_HALF, j*CELL_SIDE+CELL_SIDE_HALF, radius, id, color);
+				}
+
+				const darkTreesCoords = [
+					{
+						"i": 0,
+						"j": 3
+					},
+					{
+						"i": 0,
+						"j": 4
+					},
+					{
+						"i": 0,
+						"j": 5
+					},
+					{
+						"i": 1,
+						"j": 5
+					},
+					{
+						"i": 0,
+						"j": 6
+					},
+					{
+						"i": 1,
+						"j": 6
+					},
+					{
+						"i": 0,
+						"j": 7
+					},
+					{
+						"i": 1,
+						"j": 7
+					},
+					{
+						"i": 0,
+						"j": 8
+					},
+					{
+						"i": 1,
+						"j": 8
+					},
+					{
+						"i": 2,
+						"j": 8
+					},
+					{
+						"i": 3,
+						"j": 8
+					},
+					{
+						"i": 4,
+						"j": 8
+					},
+					{
+						"i": 5,
+						"j": 8
+					},
+					{
+						"i": 5,
+						"j": 7
+					},
+					{
+						"i": 6,
+						"j": 8
+					},
+					{
+						"i": 6,
+						"j": 7
+					},
+					{
+						"i": 7,
+						"j": 8
+					},
+					{
+						"i": 7,
+						"j": 7
+					},
+					{
+						"i": 8,
+						"j": 8
+					},
+					{
+						"i": 8,
+						"j": 7
+					},
+					{
+						"i": 9,
+						"j": 8
+					},
+					{
+						"i": 9,
+						"j": 7
+					},
+					{
+						"i": 9,
+						"j": 6
+					},
+					{
+						"i": 0,
+						"j": 1
+					},
+					{
+						"i": 0,
+						"j": 0
+					},
+					{
+						"i": 2,
+						"j": 0
+					},
+					{
+						"i": 2,
+						"j": 1
+					},
+					{
+						"i": 2,
+						"j": 2
+					},
+					{
+						"i": 2,
+						"j": 3
+					},
+					{
+						"i": 3,
+						"j": 0
+					},
+					{
+						"i": 3,
+						"j": 1
+					},
+					{
+						"i": 3,
+						"j": 2
+					},
+					{
+						"i": 3,
+						"j": 3
+					},
+					{
+						"i": 3,
+						"j": 4
+					},
+					{
+						"i": 3,
+						"j": 5
+					},
+					{
+						"i": 3,
+						"j": 6
+					},
+					{
+						"i": 4,
+						"j": 0
+					},
+					{
+						"i": 4,
+						"j": 1
+					},
+					{
+						"i": 4,
+						"j": 2
+					},
+					{
+						"i": 4,
+						"j": 3
+					},
+					{
+						"i": 4,
+						"j": 4
+					},
+					{
+						"i": 4,
+						"j": 5
+					},
+					{
+						"i": 5,
+						"j": 0
+					},
+					{
+						"i": 5,
+						"j": 1
+					},
+					{
+						"i": 5,
+						"j": 2
+					},
+					{
+						"i": 5,
+						"j": 3
+					},
+					{
+						"i": 5,
+						"j": 4
+					},
+					{
+						"i": 5,
+						"j": 5
+					},
+					{
+						"i": 6,
+						"j": 0
+					},
+					{
+						"i": 6,
+						"j": 1
+					},
+					{
+						"i": 6,
+						"j": 2
+					},
+					{
+						"i": 6,
+						"j": 3
+					},
+					{
+						"i": 6,
+						"j": 4
+					},
+					{
+						"i": 6,
+						"j": 5
+					},
+					{
+						"i": 7,
+						"j": 0
+					},
+					{
+						"i": 7,
+						"j": 1
+					},
+					{
+						"i": 7,
+						"j": 2
+					},
+					{
+						"i": 7,
+						"j": 3
+					},
+					{
+						"i": 7,
+						"j": 4
+					},
+					{
+						"i": 7,
+						"j": 5
+					},
+					{
+						"i": 8,
+						"j": 0
+					},
+					{
+						"i": 8,
+						"j": 1
+					},
+					{
+						"i": 8,
+						"j": 2
+					},
+					{
+						"i": 8,
+						"j": 3
+					},
+					{
+						"i": 8,
+						"j": 4
+					},
+					{
+						"i": 9,
+						"j": 0
+					},
+					{
+						"i": 9,
+						"j": 1
+					},
+					{
+						"i": 9,
+						"j": 2
+					},
+					{
+						"i": 9,
+						"j": 3
+					},
+					{
+						"i": 9,
+						"j": 4
+					},
+					{
+						"i": 10,
+						"j": 0
+					},
+					{
+						"i": 10,
+						"j": 1
+					}
+				];
+
+				for (let i = 0; i < darkTreesCoords.length; i++) {
+					const cell_i = darkTreesCoords[i].i;
+					const cell_j = darkTreesCoords[i].j;
+					drawCircleInCell(svgRoot, cell_i, cell_j, 0.8*CELL_SIDE_HALF, "darktree_"+i, "green");
+				}
+
+
+				const treesCoords = [
+					{
+						"i": 15,
+						"j": 0
+					},
+					{
+						"i": 15,
+						"j": 1
+					},
+					{
+						"i": 16,
+						"j": 0
+					},
+					{
+						"i": 16,
+						"j": 1
+					},
+					{
+						"i": 16,
+						"j": 2
+					},
+					{
+						"i": 16,
+						"j": 3
+					},
+					{
+						"i": 16,
+						"j": 4
+					},
+					{
+						"i": 16,
+						"j": 5
+					},
+					{
+						"i": 17,
+						"j": 0
+					},
+					{
+						"i": 17,
+						"j": 1
+					},
+					{
+						"i": 17,
+						"j": 2
+					},
+					{
+						"i": 17,
+						"j": 3
+					},
+					{
+						"i": 17,
+						"j": 4
+					},
+					{
+						"i": 17,
+						"j": 5
+					},
+					{
+						"i": 17,
+						"j": 6
+					},
+					{
+						"i": 14,
+						"j": 3
+					},
+					{
+						"i": 14,
+						"j": 4
+					},
+					{
+						"i": 14,
+						"j": 5
+					},
+					{
+						"i": 14,
+						"j": 6
+					},
+					{
+						"i": 14,
+						"j": 7
+					},
+					{
+						"i": 14,
+						"j": 8
+					},
+					{
+						"i": 13,
+						"j": 6
+					},
+					{
+						"i": 13,
+						"j": 7
+					},
+					{
+						"i": 13,
+						"j": 8
+					},
+					{
+						"i": 15,
+						"j": 7
+					},
+					{
+						"i": 15,
+						"j": 8
+					},
+					{
+						"i": 16,
+						"j": 8
+					},
+					{
+						"i": 17,
+						"j": 8
+					}
+				];
+
+				for (let i = 0; i < treesCoords.length; i++) {
+					const cell_i = treesCoords[i].i;
+					const cell_j = treesCoords[i].j;
+					drawCircleInCell(svgRoot, cell_i, cell_j, 0.8*CELL_SIDE_HALF, "tree_"+i, "forestgreen");
+				}
+				
+
+
+				const drawColoredCell = (svgRoot, i, j, id, color) => {
+					drawRect(svgRoot, i*CELL_SIDE+1, j*CELL_SIDE+1, CELL_SIDE-2, CELL_SIDE-2, id, color);
+				}
+
+				const roadCoords = [
+					{i: 0, j: 2},
+					{i: 1, j: 2},
+					{i: 1, j: 3},
+					{i: 1, j: 4},
+					{i: 2, j: 4},
+					{i: 2, j: 5},
+					{i: 2, j: 6},
+					{i: 2, j: 7},
+					{i: 3, j: 7},
+					{i: 4, j: 7},
+					{i: 4, j: 6},
+					{i: 5, j: 6},
+					{i: 6, j: 6},
+					{i: 7, j: 6},
+					{i: 8, j: 6},
+					{i: 8, j: 5},
+					{i: 9, j: 5},
+					{i: 10, j: 5},
+					{i: 10, j: 4},
+					{i: 10, j: 3},
+					{i: 10, j: 2},
+					{i: 11, j: 2},
+					{i: 11, j: 1},
+					{i: 11, j: 0},
+					{i: 14, j: 2},
+					{i: 15, j: 2},
+					{i: 15, j: 3},
+					{i: 15, j: 4},
+					{i: 15, j: 5},
+					{i: 15, j: 6},
+					{i: 16, j: 6},
+					{i: 16, j: 7},
+					{i: 17, j: 7}
+				];
+
+				for (let i = 0; i < roadCoords.length; i++) {
+					const cell_i = roadCoords[i].i;
+					const cell_j = roadCoords[i].j;
+					drawColoredCell(svgRoot, cell_i, cell_j, "road_"+1, "peru");
+				}
+
+				const waterCoords = [
+					{i: 10, j: 8},
+					{i: 11, j: 8},
+					{i: 10, j: 7},
+					{i: 11, j: 7},
+					{i: 10, j: 6},
+					{i: 11, j: 6},
+					{i: 12, j: 6},
+					{i: 11, j: 5},
+					{i: 12, j: 5},
+					{i: 11, j: 4},
+					{i: 12, j: 4},
+					{i: 11, j: 3},
+					{i: 12, j: 3},
+					{i: 13, j: 3},
+					{i: 12, j: 2},
+					{i: 13, j: 2},
+					{i: 12, j: 1},
+					{i: 13, j: 1},
+					{i: 12, j: 0},
+					{i: 13, j: 0},
+					{i: 14, j: 0}
+				];
+
+				for (let i = 0; i < waterCoords.length; i++) {
+					const cell_i = waterCoords[i].i;
+					const cell_j = waterCoords[i].j;
+					drawColoredCell(svgRoot, cell_i, cell_j, "water_"+i, "royalblue");
+				}
+
+				const bridgeCoords = [
+					{i: 12, j: 2},
+					{i: 13, j: 2}
+				];
+
+				for (let i = 0; i < bridgeCoords.length; i++) {
+					const cell_i = bridgeCoords[i].i;
+					const cell_j = bridgeCoords[i].j;
+					drawColoredCell(svgRoot, cell_i, cell_j, "water_"+i, "burlywood");
+				}
+			}
+
+			const drawPathDataInCell = (svgRoot, dimensions, i, j, data, id, color) => {
+				const MAX_WIDTH = dimensions.MAX_WIDTH;
+				const MAX_HEIGHT = dimensions.MAX_HEIGHT;
+				const CELL_SIDE = dimensions.CELL_SIDE;
+				const CELL_SIDE_HALF = CELL_SIDE/2;
+
+				const finalX = -data.width/2 + i*CELL_SIDE +CELL_SIDE_HALF;
+				const finalY = -data.height/2 + j*CELL_SIDE +CELL_SIDE_HALF;
+
+				const unitGroup = svgHelper.generateSVGElement("g", 
+					{
+						"transform": "translate("+finalX+","+finalY+")",
+						id
+					}
+				);
+
+				for (let i = 0; i < data.parts.length; i++) {
+					let attributes = Object.assign({}, data.parts[i]);
+					attributes.fill = color || attributes.fill;
+					attributes.stroke = color || attributes.fill;
+
+					let partPath = svgHelper.generateSVGElement("path", attributes);
+
+					unitGroup.appendChild(partPath);
+				}
+
+				svgRoot.appendChild(unitGroup);
+			};
+
+			window.onload = () => {
+				// ***character symbol***
+
+				const avatarPathData = {
+					width: 41.6,
+					height: 34.3,
+					parts: [
+						{
+							d: "m 32.252446,9.865585 c -4.5978,-4.300424 -13.469093,-3.037788 -18.500622,-0.597336 -3.984773,2.513079 -7.831273,3.743909 -7.968998,8.367937 0.07043,4.709141 5.245526,7.707061 9.129708,8.062121 4.61572,0.250315 9.861501,-2.466927 12.774903,-4.775228 v 0 c -7.558325,2.107189 -20.000156,0.760615 -18.447748,-6.104666 2.135908,-6.245753 7.365092,-7.253781 13.224539,-6.188806 2.29107,0.489571 4.912975,1.639322 6.380985,3.272431 l 3.407233,-2.03644 z",
+							"stroke-width": 0.264583,
+							"fill": "darkblue"
+						},
+						{
+							d: "m 29.6,9 c -1.013103,4.296786 -4.015489,14.41546 -0.5058,16.660178 2.336303,1.676946 8.181379,-1.806511 11.269465,-6.122111 4.17815,-7.298319 1.24909,-13.545424 -5.303018,-17.008782 -3.145597,-1.664481 -6.2997,-1.946193 -9.598956,-1.978274 -9.806463,0.128912 -21.964808,7.512789 -24.164205,15.535135 -0.827106,3.085852 -0.693635,4.843573 0.215232,7.456404 2.303494,6.475668 8.545049,9.147228 13.461481,10.401068 5.63497,1.13752 11.699376,1.11582 17.169162,0.39237 l 3.042769,-2.28464 v 0 c -5.994918,0.90332 -12.424757,1.03585 -17.29033,-0.10753 -3.118903,-0.75819 -4.973642,-1.16268 -8.223424,-3.117447 -2.827655,-1.776068 -4.452121,-4.280149 -5.135243,-7.17825 -0.529301,-2.374606 -0.662483,-4.074001 0.125079,-7.170589 2.506031,-9.105373 12.819789,-12.142191 21.659984,-11.150255 19.962789,1.88534 14.839429,22.38125 6.027614,20.247172 -1.870398,-0.931915 -1.727044,-3.420871 -1.611755,-5.035973 0.373015,-3.857027 1.195575,-7.875123 2.427168,-11.226038 l -3.565215,1.68756 z",
+							"stroke-width": 0.264583,
+							"fill": "darkblue"
+						}
+					]
+				};
+
+				// ***other symbols***
+
+				//sound sign
+
+				const scaleSVGPoints = (input, modifier) => {
+					let result = "";
+
+					modifier = modifier || 1;
+
+					for (let i = 0; i < input.length; i++) {
+						let point = input[i];
+
+
+						let numbers = (point.x !== undefined && point.y !== undefined) 
+							? (point.x*modifier)+","+(point.y*modifier)
+							: "";
+
+						result +=  point.letter + numbers +" ";
+					}
+
+					return result;
+				}
+
+				const soundSourcePoints = [
+					{
+						letter: "M",
+						x: 39.389,
+						y: 13.769
+					},
+					{
+						letter: "L",
+						x: 22.235,
+						y: 28.606
+					},
+					{
+						letter: "L",
+						x: 6,
+						y: 28.606
+					},
+					{
+						letter: "L",
+						x: 6,
+						y: 47.699
+					},
+					{
+						letter: "L",
+						x: 21.989,
+						y: 47.699
+					},
+					{
+						letter: "L",
+						x: 39.389,
+						y: 62.75
+					},
+					{
+						letter: "L",
+						x: 39.389,
+						y: 13.769
+					}
+				]
+
+				const wavesPoints = [
+					{
+						letter: "M",
+						x: 48,
+						y: 27.6
+					},
+					{
+						letter: "a",
+						x: 19.5,
+						y: 19.5
+					},
+					{
+						letter: "0 0 1"
+					},
+					{
+						letter: "",
+						x: 0,
+						y: 21.4
+					},
+					{
+						letter: "M",
+						x: 55.1,
+						y: 20.5
+					},
+					{
+						letter: "a",
+						x: 30,
+						y: 30
+					},
+					{
+						letter: "0 0 1"
+					},
+					{
+						letter: "",
+						x: 0,
+						y: 35.6
+					},
+					{
+						letter: "M",
+						x: 61.6,
+						y: 14
+					},
+					{
+						letter: "a",
+						x: 38.8,
+						y: 38.8
+					},
+					{
+						letter: "0 0 1"
+					},
+					{
+						letter: "",
+						x: 0,
+						y: 48.6
+					},
+				]
+
+				const soundSourceD = scaleSVGPoints(soundSourcePoints, 0.5)+"z";
+				const soundWavesD = scaleSVGPoints(wavesPoints, 0.5);
+				const soundSourcePathData = {
+					width: 37.5,
+					height: 32.3,
+					parts: [
+						{
+							d: soundSourceD,
+							style: "stroke-width:2;stroke-linejoin:round;"
+						},
+						{
+							d: soundWavesD,
+							style: "fill:none;stroke-width:2;stroke-linecap:round;"
+						}
+
+					]
+				}
+
+				// ***scene changes descriptions***
+				const scenes = [
+					{
+						toCurrent: {
+							remove: [],
+							add: [
+								{type: "function", run: startScreen}
+							],
+							text: "Все началось на заброшенной лесной дороге. Звери держались ее стороной. В дождливую погоду без повозки было не проехать от одного дерева до другого."
+						}
+					},
+					{
+						toCurrent: {
+							remove: [],
+							add: [
+								{type: "single", i: 0, j: 2, pathData: avatarPathData, id: "avatar"}
+							],
+							text: "Одинокий путник брел по дороге погрузившись в свои мысли."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [
+								{type: "single", i: 1, j: 2, pathData: avatarPathData, id: "avatar"},
+								{type: "single", i: 1, j: 0, pathData: soundSourcePathData, id: "laugh", color: "lightpink"}
+							],
+							text: "Из темной чащи послышался приветливый женский смех."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["laugh"],
+							add: [],
+							text: "И тут же смолк. Померещилось? Наверное усталость от последних дней одинокого похода дурманит голову."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 1, j: 3, pathData: avatarPathData, id: "avatar"}],
+							text: "В последней деревне сказали, что до большого города идти неделю, если останавливаться только для сна."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 1, j: 4, pathData: avatarPathData, id: "avatar"}],
+							text: "Лес вокруг выглядел старым. Нигде раньше не доводилось видеть таких высоких дереьев."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 2, j: 4, pathData: avatarPathData, id: "avatar"}],
+							text: "Но для леса сделал было до мурашек тихо. Где птицы? Кажется будто слышно как дышишь."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 2, j: 5, pathData: avatarPathData, id: "avatar"}],
+							text: "Начинает смеркаться. В это время года темнеет быстро и надо скорее найти место для ночлега."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 2, j: 6, pathData: avatarPathData, id: "avatar"}],
+							text: "Запасы воды на исходе и пока что не было ни одного ручья."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 2, j: 7, pathData: avatarPathData, id: "avatar"}],
+							text: "Лето в этом году теплое. Можно заночевать без костра."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 3, j: 7, pathData: avatarPathData, id: "avatar"}],
+							text: "В деревне сказали, что несколько лет назад торговый обоз поехал этой дорогой."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [{type: "single", i: 4, j: 7, pathData: avatarPathData, id: "avatar"}],
+							text: "И больше его никто не видел. Ни телег, ни животных, ни людей. Как будто сквозь землю провалились."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [
+								{type: "single", i: 4, j: 6, pathData: avatarPathData, id: "avatar"},
+								{type: "single", i: 8, j: 6, pathData: soundSourcePathData, id: "river_noise", color: "powderblue"}
+							],
+							text: "Недалеко послышался шум реки."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar", "river_noise"],
+							add: [
+								{type: "single", i: 5, j: 6, pathData: avatarPathData, id: "avatar"}
+							],
+							text: "Шум реки звучал как музыка в трактире. От этой лесной тишины уже начинало звенеть в ушах."
+						}
+					},
+					{
+						toCurrent: {
+							remove: ["avatar"],
+							add: [
+								{type: "single", i: 6, j: 6, pathData: avatarPathData, id: "avatar"}
+							],
+							text: "В другой раз можно было остановиться ловить рыбу. Но сейчас смеркается и чем скорее этот лес кончится тем лучше."
+						}
+					}
+				];
+
+				// ***scene change handling***
+				const buttonPrevious = document.querySelector("#previous");
+				const buttonNext = document.querySelector("#next");
+				const setControlsAvailability = (sceneIndex) => {
+					const sceneData = scenes[sceneIndex];
+
+					if (sceneIndex == 0) {
+						buttonPrevious.setAttribute("disabled", "true");
+					}
+					else {
+						buttonPrevious.removeAttribute("disabled");
+					}
+
+					if (scenes[sceneIndex+1] === undefined) {
+						buttonNext.setAttribute("disabled", "true");
+					}
+					else {
+						buttonNext.removeAttribute("disabled");
+					}
+				}
+
+				const handleSceneGraphicsChange = (svgRoot, dimensions, toRemove, toAdd) => {
+					for (let i = 0; i < toRemove.length; i++) {
+						const elementToRemove = document.querySelector("#"+toRemove[i]);
+						if (elementToRemove === null) {
+							alert("Can't remove element with id: " + toRemove[i]);
+						}
+						else {
+							svgRoot.removeChild(elementToRemove);
+						}
+					}
+
+					for (let i = 0; i < toAdd.length; i++) {
+						let elementToAdd = toAdd[i];
+
+						if (elementToAdd.type === "function") {
+							elementToAdd.run(svgRoot, dimensions)
+						}
+						else if (elementToAdd.type === "single") {
+							drawPathDataInCell(svgRoot, dimensions, elementToAdd.i,elementToAdd.j ,elementToAdd.pathData, elementToAdd.id, elementToAdd.color);
+						}
+						else {
+							alert("No idea how to handle type: " + elementToAdd.type);
+						}
+					}
+				};
+
+				const textExposition = document.querySelector("#exposition");
+				const showScene = (globalState, buttonNextWasPressed) => {
+					const currentSceneIndex = globalState.sceneIndex;
+					const newSceneIndex = buttonNextWasPressed === true ? currentSceneIndex+1 : currentSceneIndex-1;
+					const sceneData = scenes[newSceneIndex].toCurrent;
+
+					if (buttonNextWasPressed) {
+						handleSceneGraphicsChange(globalState.svgRoot, globalState.dimensions, sceneData.remove, sceneData.add);
+					}
+					else {
+						const currentSceneData = scenes[currentSceneIndex].toCurrent;
+
+						let toRemove = [];
+						for (let i = 0; i < currentSceneData.add.length; i++) {
+							toRemove.push(currentSceneData.add[i].id);
+						}
+
+						let wereRemoved = currentSceneData.remove;
+
+						let add = [];
+
+						const getElementFromPastScenes = (id) => {
+							for (let j = newSceneIndex; j >= 0; j--) {
+								let addDataToAnalyze = scenes[j].toCurrent.add;
+								for (let k = 0; k < addDataToAnalyze.length; k++) {
+									if (addDataToAnalyze[k].id === id) {
+										return addDataToAnalyze[k];
+									}
+								}
+							}
+
+							return undefined;
+						}
+
+						for (let i = 0; i < wereRemoved.length; i++) {
+							let elementId = wereRemoved[i];
+
+							let element = getElementFromPastScenes(elementId);
+
+							if (element === undefined) {
+								alert("Can't find element with id: " + elementId);
+							}
+							else {
+								add.push(element);
+							}
+						}
+
+						handleSceneGraphicsChange(globalState.svgRoot, globalState.dimensions, toRemove, add);
+					}
+
+					textExposition.innerHTML = sceneData.text;
+					setControlsAvailability(newSceneIndex);
+					globalState.sceneIndex = newSceneIndex;
+				}
+
+				// ***globalState, callback setup and initial render***
+				const MAX_WIDTH = 900;
+				const MAX_HEIGHT = 450;
+				const CELL_SIDE = 50;
+				const svgRoot = document.querySelector("#svg");
+
+				const globalState = {
+					dimensions: {
+						MAX_WIDTH,
+						MAX_HEIGHT,
+						CELL_SIDE
+					},
+					svgRoot,
+					sceneIndex: -1
+				}
+				const showSceneClosure = showScene.bind(null, globalState);
+				//initial render
+				showSceneClosure(true)
+
+				buttonNext.onclick = showSceneClosure.bind(null, true);
+				buttonPrevious.onclick = showSceneClosure.bind(null, false);
+
+
+				// ***useful links***
+				// https://www.december.com/html/spec/colorsvg.html
+			}
+
+			//  ***editor helper***
+			const editorInit = () => {
+				let mapData = [];
+
+				document.querySelector("svg").onclick = (e) => {mapData.push({i: Math.floor(e.layerX/50), j: Math.floor(e.layerY/50)})};
+
+				const printMapData = () => {
+					console.log(JSON.stringify(mapData, null, 4));
+				};
+
+				const cleanMapData = () => {
+					mapData = [];
+				};
+
+				return {cleanMapData, printMapData}
+			};
+		</script>
+	</head>
+
+	<body>
+
+		<div id="container">
+
+			<div id="menu">
+				<ul class="menu-items pull-right">
+					<li><a href="#" id="overview">Overview</a></li>
+					<li><a href="#" id="usage">Usage</a></li>
+					<li><a href="#" id="plans">Plans</a></li>
+					<li><a href="#" id="thank_you">Thank you</a></li>
+				</ul>
+
+				<h3>Slide story board</h3>
+			</div>
+			
+			<div id="content" style="padding-top: 0px;">
+				<div id="scene">
+					<svg xmlns="http://www.w3.org/2000/svg" id="svg" style="height:100%; width:100% ; user-select: none; -webkit-user-select: none; -moz-user-select: none;"></svg>
+				</div>
+				<div id="controls" style="padding-top: 25px; text-align: center;">
+					<button style="padding:15px; font-weight: bold;" id="previous"><<<</button><button style="padding:15px; font-weight: bold;" id="next">>>></button>
+				</div>
+				<div id="exposition" style="padding-top: 20px; font-size: 19px;"></div>
+			</div>
+
+		</div>
+
+	</body>
+</html>
