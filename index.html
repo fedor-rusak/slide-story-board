@@ -136,7 +136,7 @@
 				let newLine = svgHelper.generateSVGElement("line", attributes);
 
 				svgRoot.appendChild(newLine);
-			}
+			};
 
 			const drawCircle = (svgRoot, cx, cy, radius, id, color) => {
 				let attributes = {
@@ -155,7 +155,7 @@
 				let newCircle = svgHelper.generateSVGElement("circle", attributes);
 
 				svgRoot.appendChild(newCircle);
-			}
+			};
 
 			const drawRect = (svgRoot, x, y, width, height, id, borderColor, fillColor) => {
 				let attributes = {
@@ -175,7 +175,7 @@
 				let newRect = svgHelper.generateSVGElement("rect", attributes);
 
 				svgRoot.appendChild(newRect);
-			}
+			};
 
 			const startScreen = (svgRoot, dimensions) => {
 				const MAX_WIDTH = dimensions.MAX_WIDTH;
@@ -744,9 +744,7 @@
 				svgRoot.appendChild(unitGroup);
 			};
 
-			window.onload = () => {
-				// ***character symbol***
-
+			const generatePathDataModels = () => {
 				const avatarPathData = {
 					width: 41.6,
 					height: 34.3,
@@ -900,130 +898,13 @@
 					]
 				}
 
-				// ***scene changes descriptions***
-				const scenes = [
-					{
-						toCurrent: {
-							remove: [],
-							add: [
-								{type: "function", run: startScreen}
-							],
-							text: "Все началось на заброшенной лесной дороге. Звери держались ее стороной. В дождливую погоду без повозки было не проехать от одного дерева до другого."
-						}
-					},
-					{
-						toCurrent: {
-							remove: [],
-							add: [
-								{type: "single", i: 0, j: 2, pathData: avatarPathData, id: "avatar"}
-							],
-							text: "Одинокий путник брел по дороге погрузившись в свои мысли."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [
-								{type: "single", i: 1, j: 2, pathData: avatarPathData, id: "avatar"},
-								{type: "single", i: 1, j: 0, pathData: soundSourcePathData, id: "laugh", color: "lightpink"}
-							],
-							text: "Из темной чащи послышался приветливый женский смех."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["laugh"],
-							add: [],
-							text: "И тут же смолк. Померещилось? Наверное усталость от последних дней одинокого похода дурманит голову."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 1, j: 3, pathData: avatarPathData, id: "avatar"}],
-							text: "В последней деревне сказали, что до большого города идти неделю, если останавливаться только для сна."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 1, j: 4, pathData: avatarPathData, id: "avatar"}],
-							text: "Лес вокруг выглядел старым. Нигде раньше не доводилось видеть таких высоких дереьев."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 2, j: 4, pathData: avatarPathData, id: "avatar"}],
-							text: "Но для леса сделал было до мурашек тихо. Где птицы? Кажется будто слышно как дышишь."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 2, j: 5, pathData: avatarPathData, id: "avatar"}],
-							text: "Начинает смеркаться. В это время года темнеет быстро и надо скорее найти место для ночлега."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 2, j: 6, pathData: avatarPathData, id: "avatar"}],
-							text: "Запасы воды на исходе и пока что не было ни одного ручья."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 2, j: 7, pathData: avatarPathData, id: "avatar"}],
-							text: "Лето в этом году теплое. Можно заночевать без костра."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 3, j: 7, pathData: avatarPathData, id: "avatar"}],
-							text: "В деревне сказали, что несколько лет назад торговый обоз поехал этой дорогой."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [{type: "single", i: 4, j: 7, pathData: avatarPathData, id: "avatar"}],
-							text: "И больше его никто не видел. Ни телег, ни животных, ни людей. Как будто сквозь землю провалились."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [
-								{type: "single", i: 4, j: 6, pathData: avatarPathData, id: "avatar"},
-								{type: "single", i: 8, j: 6, pathData: soundSourcePathData, id: "river_noise", color: "powderblue"}
-							],
-							text: "Недалеко послышался шум реки."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar", "river_noise"],
-							add: [
-								{type: "single", i: 5, j: 6, pathData: avatarPathData, id: "avatar"}
-							],
-							text: "Шум реки звучал как музыка в трактире. От этой лесной тишины уже начинало звенеть в ушах."
-						}
-					},
-					{
-						toCurrent: {
-							remove: ["avatar"],
-							add: [
-								{type: "single", i: 6, j: 6, pathData: avatarPathData, id: "avatar"}
-							],
-							text: "В другой раз можно было остановиться ловить рыбу. Но сейчас смеркается и чем скорее этот лес кончится тем лучше."
-						}
-					}
-				];
+				return {
+					avatar: avatarPathData,
+					soundSource: soundSourcePathData
+				}
+			};
 
-				// ***scene change handling***
+			const setupCallbackAndPerformFirstRender = (scenes) => {
 				const buttonPrevious = document.querySelector("#previous");
 				const buttonNext = document.querySelector("#next");
 				const setControlsAvailability = (sceneIndex) => {
@@ -1074,13 +955,13 @@
 				const showScene = (globalState, buttonNextWasPressed) => {
 					const currentSceneIndex = globalState.sceneIndex;
 					const newSceneIndex = buttonNextWasPressed === true ? currentSceneIndex+1 : currentSceneIndex-1;
-					const sceneData = scenes[newSceneIndex].toCurrent;
+					const sceneData = scenes[newSceneIndex];
 
 					if (buttonNextWasPressed) {
 						handleSceneGraphicsChange(globalState.svgRoot, globalState.dimensions, sceneData.remove, sceneData.add);
 					}
 					else {
-						const currentSceneData = scenes[currentSceneIndex].toCurrent;
+						const currentSceneData = scenes[currentSceneIndex];
 
 						let toRemove = [];
 						for (let i = 0; i < currentSceneData.add.length; i++) {
@@ -1093,7 +974,7 @@
 
 						const getElementFromPastScenes = (id) => {
 							for (let j = newSceneIndex; j >= 0; j--) {
-								let addDataToAnalyze = scenes[j].toCurrent.add;
+								let addDataToAnalyze = scenes[j].add;
 								for (let k = 0; k < addDataToAnalyze.length; k++) {
 									if (addDataToAnalyze[k].id === id) {
 										return addDataToAnalyze[k];
@@ -1146,6 +1027,99 @@
 
 				buttonNext.onclick = showSceneClosure.bind(null, true);
 				buttonPrevious.onclick = showSceneClosure.bind(null, false);
+			};
+
+			window.onload = () => {
+				// ***complex svg geometry***
+				const models = generatePathDataModels();
+
+				// ***scene changes descriptions***
+				const scenes = [
+					{
+						remove: [],
+						add: [{type: "function", run: startScreen}],
+						text: "Все началось на заброшенной лесной дороге. Звери держались ее стороной. В дождливую погоду без повозки было не проехать от одного дерева до другого."
+					},
+					{
+						remove: [],
+						add: [{type: "single", i: 0, j: 2, pathData: models.avatar, id: "avatar"}],
+						text: "Одинокий путник брел по дороге погрузившись в свои мысли."
+					},
+					{
+						remove: ["avatar"],
+						add: [
+							{type: "single", i: 1, j: 2, pathData: models.avatar, id: "avatar"},
+							{type: "single", i: 1, j: 0, pathData: models.soundSource, id: "laugh", color: "lightpink"}
+						],
+						text: "Из темной чащи послышался приветливый женский смех."
+					},
+					{
+						remove: ["laugh"],
+						add: [],
+						text: "И тут же смолк. Померещилось? Наверное усталость от последних дней одинокого похода дурманит голову."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 1, j: 3, pathData: models.avatar, id: "avatar"}],
+						text: "В последней деревне сказали, что до большого города идти неделю, если останавливаться только для сна."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 1, j: 4, pathData: models.avatar, id: "avatar"}],
+						text: "Лес вокруг выглядел старым. Нигде раньше не доводилось видеть таких высоких дереьев."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 2, j: 4, pathData: models.avatar, id: "avatar"}],
+						text: "От тишины в этом лесу иногда мурашки бегут по коже. Где птицы? Кажется будто слышно как дышишь."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 2, j: 5, pathData: models.avatar, id: "avatar"}],
+						text: "Начинает смеркаться. В это время года темнеет быстро и надо скорее найти место для ночлега."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 2, j: 6, pathData: models.avatar, id: "avatar"}],
+						text: "Запасы воды на исходе и пока что не было ни одного ручья."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 2, j: 7, pathData: models.avatar, id: "avatar"}],
+						text: "Лето в этом году теплое. Можно заночевать без костра."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 3, j: 7, pathData: models.avatar, id: "avatar"}],
+						text: "В деревне сказали, что несколько лет назад торговый обоз поехал этой дорогой."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 4, j: 7, pathData: models.avatar, id: "avatar"}],
+						text: "И больше его никто не видел. Ни телег, ни животных, ни людей. Как будто сквозь землю провалились."
+					},
+					{
+						remove: ["avatar"],
+						add: [
+							{type: "single", i: 4, j: 6, pathData: models.avatar, id: "avatar"},
+							{type: "single", i: 8, j: 6, pathData: models.soundSource, id: "river_noise", color: "powderblue"}
+						],
+						text: "Недалеко послышался шум реки."
+					},
+					{
+						remove: ["avatar", "river_noise"],
+						add: [{type: "single", i: 5, j: 6, pathData: models.avatar, id: "avatar"}],
+						text: "Шум реки звучал как музыка в трактире. От этой лесной тишины уже начинало звенеть в ушах."
+					},
+					{
+						remove: ["avatar"],
+						add: [{type: "single", i: 6, j: 6, pathData: models.avatar, id: "avatar"}],
+						text: "В другой раз можно было остановиться ловить рыбу. Но сейчас темнеет и чем скорее этот лес кончится тем лучше."
+					}
+				];
+
+
+				setupCallbackAndPerformFirstRender(scenes);
 
 
 				// ***useful links***
