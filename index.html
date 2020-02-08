@@ -157,7 +157,7 @@
 				svgRoot.appendChild(newCircle);
 			};
 
-			const drawRect = (svgRoot, x, y, width, height, id, borderColor, fillColor) => {
+			const drawRect = (svgRoot, x, y, width, height, id, borderColor, fillColor, opacity) => {
 				let attributes = {
 					id,
 					x,
@@ -165,7 +165,8 @@
 					width,
 					height,
 					stroke: borderColor,
-					fill: fillColor || borderColor
+					fill: fillColor || borderColor,
+					opacity: opacity || 1
 				};
 
 				if (borderColor === undefined) {
@@ -715,7 +716,7 @@
 				}
 			}
 
-			const drawPathDataInCell = (svgRoot, dimensions, i, j, data, id, color) => {
+			const drawPathDataInCell = (svgRoot, dimensions, i, j, data, id, color, opacity) => {
 				const MAX_WIDTH = dimensions.MAX_WIDTH;
 				const MAX_HEIGHT = dimensions.MAX_HEIGHT;
 				const CELL_SIDE = dimensions.CELL_SIDE;
@@ -735,6 +736,7 @@
 					let attributes = Object.assign({}, data.parts[i]);
 					attributes.fill = color || attributes.fill;
 					attributes.stroke = color || attributes.fill;
+					attributes["opacity"] = opacity || 1;
 
 					let partPath = svgHelper.generateSVGElement("path", attributes);
 
@@ -927,12 +929,21 @@
 
 				const handleSceneGraphicsChange = (svgRoot, dimensions, toRemove, toAdd) => {
 					for (let i = 0; i < toRemove.length; i++) {
-						const elementToRemove = document.querySelector("#"+toRemove[i]);
-						if (elementToRemove === null) {
-							alert("Can't remove element with id: " + toRemove[i]);
+						const selector = toRemove[i];
+						if (selector.indexOf("[") === 0) {
+							const elementsToRemove = document.querySelectorAll(selector);
+							for (let j = 0; j < elementsToRemove.length; j++) {
+								svgRoot.removeChild(elementsToRemove[j]);
+							}
 						}
 						else {
-							svgRoot.removeChild(elementToRemove);
+							const elementToRemove = document.querySelector("#"+selector);
+							if (elementToRemove === null) {
+								alert("Can't remove element with id: " + selector);
+							}
+							else {
+								svgRoot.removeChild(elementToRemove);
+							}
 						}
 					}
 
@@ -943,7 +954,13 @@
 							elementToAdd.run(svgRoot, dimensions)
 						}
 						else if (elementToAdd.type === "single") {
-							drawPathDataInCell(svgRoot, dimensions, elementToAdd.i,elementToAdd.j ,elementToAdd.pathData, elementToAdd.id, elementToAdd.color);
+							drawPathDataInCell(svgRoot, dimensions, elementToAdd.i,elementToAdd.j ,elementToAdd.pathData, elementToAdd.id, elementToAdd.color, elementToAdd.opacity);
+						}
+						else if (elementToAdd.type === "rect") {
+							let width = elementToAdd.width === "max" ? dimensions.MAX_WIDTH : elementToAdd.width;
+							let height = elementToAdd.height === "max" ? dimensions.MAX_HEIGHT : elementToAdd.height;
+
+							drawRect(svgRoot, elementToAdd.x || 0, elementToAdd.y || 0, width, height, elementToAdd.id, elementToAdd.color, elementToAdd.color, elementToAdd.opacity);
 						}
 						else {
 							alert("No idea how to handle type: " + elementToAdd.type);
@@ -985,16 +1002,44 @@
 							return undefined;
 						}
 
+						const getElementFromPastScenesStartsWith = (idPrefix) => {
+							const result = [];
+
+							for (let j = newSceneIndex; j >= 0; j--) {
+								let addDataToAnalyze = scenes[j].add;
+								for (let k = 0; k < addDataToAnalyze.length; k++) {
+									if (addDataToAnalyze[k].id !== undefined && addDataToAnalyze[k].id.startsWith(idPrefix)) {
+										result.push(addDataToAnalyze[k]);
+									}
+								}
+							}
+
+							return result;
+						}
+
 						for (let i = 0; i < wereRemoved.length; i++) {
-							let elementId = wereRemoved[i];
+							if (wereRemoved[i].indexOf("[") === 0) {
+								const prefix = wereRemoved[i].replace("[id^='", "").replace("']", "");
+								const addByStartsWith = getElementFromPastScenesStartsWith(prefix);
 
-							let element = getElementFromPastScenes(elementId);
-
-							if (element === undefined) {
-								alert("Can't find element with id: " + elementId);
+								if (addByStartsWith.length === 0) {
+									alert("Can't find elements with id that starts with prefix: " + prefix);
+								}
+								else {
+									add = add.concat(addByStartsWith);
+								}
 							}
 							else {
-								add.push(element);
+								let elementId = wereRemoved[i];
+
+								let element = getElementFromPastScenes(elementId);
+
+								if (element === undefined) {
+									alert("Can't find element with id: " + elementId);
+								}
+								else {
+									add.push(element);
+								}
 							}
 						}
 
@@ -1075,46 +1120,104 @@
 					},
 					{
 						remove: ["avatar"],
-						add: [{type: "single", i: 2, j: 5, pathData: models.avatar, id: "avatar"}],
+						add: [
+							{type: "single", i: 2, j: 5, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.1}
+						],
 						text: "Начинает смеркаться. В это время года темнеет быстро и надо скорее найти место для ночлега."
 					},
 					{
-						remove: ["avatar"],
-						add: [{type: "single", i: 2, j: 6, pathData: models.avatar, id: "avatar"}],
+						remove: ["avatar", "dusk"],
+						add: [
+							{type: "single", i: 2, j: 6, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.13}
+						],
 						text: "Запасы воды на исходе и пока что не было ни одного ручья."
 					},
 					{
-						remove: ["avatar"],
-						add: [{type: "single", i: 2, j: 7, pathData: models.avatar, id: "avatar"}],
-						text: "Лето в этом году теплое. Можно заночевать без костра."
+						remove: ["avatar", "dusk"],
+						add: [
+							{type: "single", i: 2, j: 7, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.16}
+						],
+						text: "Лето в этом году теплое. Лес как следует успел прогреться и прохладно будет только к утру."
 					},
 					{
-						remove: ["avatar"],
-						add: [{type: "single", i: 3, j: 7, pathData: models.avatar, id: "avatar"}],
+						remove: ["avatar", "dusk"],
+						add: [
+							{type: "single", i: 3, j: 7, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.19}
+						],
 						text: "В деревне сказали, что несколько лет назад торговый обоз поехал этой дорогой."
 					},
 					{
-						remove: ["avatar"],
-						add: [{type: "single", i: 4, j: 7, pathData: models.avatar, id: "avatar"}],
+						remove: ["avatar", "dusk"],
+						add: [
+							{type: "single", i: 4, j: 7, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.22}
+						],
 						text: "И больше его никто не видел. Ни телег, ни животных, ни людей. Как будто сквозь землю провалились."
 					},
 					{
-						remove: ["avatar"],
+						remove: ["avatar", "dusk"],
 						add: [
 							{type: "single", i: 4, j: 6, pathData: models.avatar, id: "avatar"},
-							{type: "single", i: 8, j: 6, pathData: models.soundSource, id: "river_noise", color: "powderblue"}
+							{type: "single", i: 8, j: 6, pathData: models.soundSource, id: "river_noise", color: "powderblue"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.25}
 						],
 						text: "Недалеко послышался шум реки."
 					},
 					{
-						remove: ["avatar", "river_noise"],
-						add: [{type: "single", i: 5, j: 6, pathData: models.avatar, id: "avatar"}],
+						remove: ["avatar", "river_noise", "dusk"],
+						add: [
+							{type: "single", i: 5, j: 6, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.28}
+						],
 						text: "Шум реки звучал как музыка в трактире. От этой лесной тишины уже начинало звенеть в ушах."
 					},
 					{
-						remove: ["avatar"],
-						add: [{type: "single", i: 6, j: 6, pathData: models.avatar, id: "avatar"}],
+						remove: ["avatar", "dusk"],
+						add: [
+							{type: "single", i: 6, j: 6, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.31}
+						],
 						text: "В другой раз можно было остановиться ловить рыбу. Но сейчас темнеет и чем скорее этот лес кончится тем лучше."
+					},
+					{
+						remove: ["avatar", "dusk"],
+						add: [
+							{type: "single", i: 6, j: 6, pathData: models.avatar, id: "avatar_path_1", opacity: 0.1},
+							{type: "single", i: 7, j: 6, pathData: models.avatar, id: "avatar_path_2", opacity: 0.13},
+							{type: "single", i: 8, j: 6, pathData: models.avatar, id: "avatar_path_3", opacity: 0.16},
+							{type: "single", i: 8, j: 5, pathData: models.avatar, id: "avatar_path_4", opacity: 0.19},
+							{type: "single", i: 9, j: 5, pathData: models.avatar, id: "avatar_path_5", opacity: 0.22},
+							{type: "single", i: 10, j: 5, pathData: models.avatar, id: "avatar_path_6", opacity: 0.25},
+							{type: "single", i: 10, j: 4, pathData: models.avatar, id: "avatar_path_7", opacity: 0.28},
+							{type: "single", i: 10, j: 3, pathData: models.avatar, id: "avatar_path_8", opacity: 0.31},
+							{type: "single", i: 10, j: 2, pathData: models.avatar, id: "avatar_path_9", opacity: 0.34},
+							{type: "single", i: 11, j: 2, pathData: models.avatar, id: "avatar_path_10", opacity: 0.37},
+							{type: "single", i: 12, j: 2, pathData: models.avatar, id: "avatar_path_11", opacity: 0.4},
+							{type: "single", i: 13, j: 2, pathData: models.avatar, id: "avatar_path_12", opacity: 0.43},
+							{type: "single", i: 14, j: 2, pathData: models.avatar, id: "avatar_path_13", opacity: 0.46},
+							{type: "single", i: 14, j: 1, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.55}
+						],
+						text: "Шум реки оказался не выдумкой уставшего путника, а достаточно широкой рекой, по которой при желании можно было спуститься на лодке. Недалеко был мост по которому удалось перейти на другой берег и спокойно набрать воды."
+					},
+					{
+						remove: ["[id^='avatar_path']", "dusk"],
+						add: [
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.58}
+						],
+						text: "Выходя на мост будто покинула гнетущая тяжесть этого странного леса. Или это лишь предвкушение долгожданного отдыха после долгого дня ходьбы? Уталив жажду можно было получше посмотреть место для предстоящей ночевки."
+					},
+					{
+						remove: ["avatar", "dusk"],
+						add: [
+							{type: "single", i: 15, j: 1, pathData: models.avatar, id: "avatar"},
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.76}
+						],
+						text: "Слишком темно и нет сил искать дрова для костра. Придется заночевать укутавшись в теплый плащ рядом с деревом. Небо чистое, а значит дождь не станет проблемой. Полная луна отражаясь от речной воды помогает сориентироваться среди ближайших деревьев."
 					}
 				];
 
