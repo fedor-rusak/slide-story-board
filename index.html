@@ -178,6 +178,11 @@
 				svgRoot.appendChild(newRect);
 			};
 
+			const drawColoredCell = (svgRoot, CELL_SIDE, i, j, id, color, opacity) => {
+				drawRect(svgRoot, i*CELL_SIDE+1, j*CELL_SIDE+1, CELL_SIDE-2, CELL_SIDE-2, id, color, color, opacity);
+			}
+
+
 			const startScreen = (svgRoot, dimensions) => {
 				const MAX_WIDTH = dimensions.MAX_WIDTH;
 				const MAX_HEIGHT = dimensions.MAX_HEIGHT;
@@ -324,11 +329,6 @@
 				}
 				
 
-
-				const drawColoredCell = (svgRoot, i, j, id, color) => {
-					drawRect(svgRoot, i*CELL_SIDE+1, j*CELL_SIDE+1, CELL_SIDE-2, CELL_SIDE-2, id, color);
-				}
-
 				const roadCoords = [
 					{i: 0,j: 2},
 					{i: 1,j: 2},
@@ -368,7 +368,7 @@
 				for (let i = 0; i < roadCoords.length; i++) {
 					const cell_i = roadCoords[i].i;
 					const cell_j = roadCoords[i].j;
-					drawColoredCell(svgRoot, cell_i, cell_j, "road_"+1, "peru");
+					drawColoredCell(svgRoot, CELL_SIDE, cell_i, cell_j, "road_"+1, "peru");
 				}
 
 				const waterCoords = [
@@ -398,7 +398,7 @@
 				for (let i = 0; i < waterCoords.length; i++) {
 					const cell_i = waterCoords[i].i;
 					const cell_j = waterCoords[i].j;
-					drawColoredCell(svgRoot, cell_i, cell_j, "water_"+i, "royalblue");
+					drawColoredCell(svgRoot, CELL_SIDE, cell_i, cell_j, "water_"+i, "royalblue");
 				}
 
 				const bridgeCoords = [
@@ -409,7 +409,7 @@
 				for (let i = 0; i < bridgeCoords.length; i++) {
 					const cell_i = bridgeCoords[i].i;
 					const cell_j = bridgeCoords[i].j;
-					drawColoredCell(svgRoot, cell_i, cell_j, "water_"+i, "burlywood");
+					drawColoredCell(svgRoot, CELL_SIDE, cell_i, cell_j, "water_"+i, "burlywood");
 				}
 			}
 
@@ -527,9 +527,21 @@
 					]
 				}
 
+				const human = {
+					width: 25.25,
+					height: 44.1,
+					parts: [
+						{
+							d: "m 0,36 c 4.86626,-6.00261 12.63605,-13.09978 14.42243,-20.23359 1.48014,-6.33885 2.04609,-16.19855 -1.48861,-11.32406 -1.29778,2.16148 -2.07912,3.40393 -2.71432,7.52093 -1.35051,9.7633 0.15309,11.31264 0.15432,16.82925 -0.0118,5.24556 0.0221,10.14232 0.0264,14.79441 0.0245,1.20315 0.29161,0.28385 -2.62133,1.48749 -0.0435,0.018 0.002,-0.094 0.002,-0.14107 -0.88343,-9.01614 9.90513,-21.7775 14.4324,-15.80872 2.272,4.01376 2.62634,9.34083 3.00315,13.70139 l -2.6202,1.35353 v 0 c -0.44259,-1.92145 -0.45094,-4.05328 -0.67947,-5.85944 -0.3143,-3.37076 -1.26112,-8.58913 -3.48889,-9.38525 -3.07421,-0.85991 -8.83667,4.98472 -8.02251,14.801 -3.01999,1.82966 -2.64469,2.42251 -2.62447,1.19749 -0.27273,-6.20978 0.37508,-12.63505 0.44723,-18.46221 0.19058,-5.44096 -0.71548,-10.9064 0.31214,-15.82096 0.53854,-2.51908 1.81741,-5.17972 3.42856,-7.11885 6.08799,-6.885874 6.03443,5.77481 4.92504,10.73384 -1.88123,6.64439 -6.36124,12.88045 -10.9221,17.58344",
+							"stroke-width": 0.21780693
+						}
+					]
+				}
+
 				return {
 					avatar: avatarPathData,
-					soundSource: soundSourcePathData
+					soundSource: soundSourcePathData,
+					human: human
 				}
 			};
 
@@ -588,6 +600,9 @@
 							let height = elementToAdd.height === "max" ? dimensions.MAX_HEIGHT : elementToAdd.height;
 
 							drawRect(svgRoot, elementToAdd.x || 0, elementToAdd.y || 0, width, height, elementToAdd.id, elementToAdd.color, elementToAdd.color, elementToAdd.opacity);
+						}
+						else if (elementToAdd.type == "cell") {
+							drawColoredCell(svgRoot, dimensions.CELL_SIDE, elementToAdd.i, elementToAdd.j, elementToAdd.id, elementToAdd.color, elementToAdd.opacity);
 						}
 						else {
 							alert("No idea how to handle type: " + elementToAdd.type);
@@ -669,7 +684,7 @@
 								}
 							}
 						}
-
+						console.log(add)
 						handleSceneGraphicsChange(globalState.svgRoot, globalState.dimensions, toRemove, add);
 					}
 
@@ -845,7 +860,33 @@
 							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.76}
 						],
 						text: "Слишком темно и нет сил искать дрова для костра. Придется заночевать укутавшись в теплый плащ рядом с деревом. Небо чистое, а значит дождь не станет проблемой. Полная луна отражаясь от речной воды помогает сориентироваться среди ближайших деревьев."
-					}
+					},
+					{
+						remove: ["dusk"],
+						add: [
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "dusk", opacity: 0.85},
+							{type: "cell", i: 11, j: 1, id:"light_1", color:"aqua", opacity: 0.7},
+							{type: "cell", i: 11, j: 0, id:"light_2", color:"aqua", opacity: 0.5},
+							{type: "cell", i: 12, j: 1, id:"light_3", color:"aqua", opacity: 0.5},
+							{type: "cell", i: 11, j: 2, id:"light_4", color:"aqua", opacity: 0.5},
+							{type: "cell", i: 10, j: 1, id:"light_5", color:"aqua", opacity: 0.5},
+							{type: "cell", i: 12, j: 0, id:"light_6", color:"aqua", opacity: 0.35},
+							{type: "cell", i: 12, j: 2, id:"light_7", color:"aqua", opacity: 0.35},
+							{type: "cell", i: 10, j: 2, id:"light_8", color:"aqua", opacity: 0.35},
+							{type: "cell", i: 10, j: 0, id:"light_9", color:"aqua", opacity: 0.35},
+							{type: "cell", i: 13, j: 1, id:"light_9", color:"aqua", opacity: 0.15},
+							{type: "cell", i: 11, j: 3, id:"light_9", color:"aqua", opacity: 0.15},
+							{type: "single", i: 11, j: 1, pathData: models.human, id: "human", color: "mediumorchid"},
+						],
+						text: "Что это. Свет? Одинокая женская фигура в балахоне скрывающем лицо неподвижно стояла на берегу. Ее будто освещал факел, но не было ни языков пламени, ни дыма. Только бледный синий свет покрывал часть дороги и отражался в воде."
+					},
+					{
+						remove: ["avatar", "dusk", "[id^='light']", "human"],
+						add: [
+							{type: "rect", width: "max", height: "max", color: "cadetblue", id: "night"}
+						],
+						text: "Ночь."
+					},
 				];
 
 
